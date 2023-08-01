@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const categoryController = require('../controllers/categoryController');
-const authMiddleware = require('../middleware/authMiddleware').default;
+const authMiddleware = require('../middleware/authMiddleware');
 
 // Get categories with pagination
 router.get('/', categoryController.getCategories);
