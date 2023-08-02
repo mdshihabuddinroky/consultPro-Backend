@@ -1,11 +1,12 @@
-// app/controllers/chatController.js
+// chatController.js 
 const ChatMessage = require('../models/chatMessageModel');
-const UserChatList = require('../models/userChatListModel');
+const { connectedUsers } = require('../index'); // Import the connectedUsers Map from index.js
 
 // Controller to send a chat message
 exports.sendMessage = async (req, res) => {
   try {
-    const { senderId, receiverId, message, messageType } = req.body;
+    const { receiverId, message, messageType } = req.body;
+    const { senderId } = req.user;
 
     const messageData = {
       sender_id: senderId,
@@ -16,23 +17,19 @@ exports.sendMessage = async (req, res) => {
 
     await ChatMessage.saveMessage(messageData);
 
-    // Update sender's chat list
-    const senderChatData = {
-      user_id: senderId,
-      chat_with_user_id: receiverId,
-      last_message: message,
-      last_message_time: new Date(),
-    };
-    await UserChatList.updateChatList(senderChatData);
+    // Get the connected sockets for the sender and receiver from the connectedUsers Map
+    const senderSocket = connectedUsers.get(senderId);
+    const receiverSocket = connectedUsers.get(receiverId);
 
-    // Update receiver's chat list
-    const receiverChatData = {
-      user_id: receiverId,
-      chat_with_user_id: senderId,
-      last_message: message,
-      last_message_time: new Date(),
-    };
-    await UserChatList.updateChatList(receiverChatData);
+    if (senderSocket) {
+      // Emit the newMessage event to the sender socket
+      senderSocket.emit('newMessage', { message: messageData });
+    }
+
+    if (receiverSocket) {
+      // Emit the newMessage event to the receiver socket
+      receiverSocket.emit('newMessage', { message: messageData });
+    }
 
     res.status(200).json({ message: 'Message sent successfully' });
   } catch (error) {
@@ -40,6 +37,9 @@ exports.sendMessage = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
+// Rest of the controllers (getChatMessages and getUserChatList) remain unchanged
+
 
 // Controller to get chat messages between two users
 exports.getChatMessages = async (req, res) => {
@@ -61,7 +61,8 @@ exports.getUserChatList = async (req, res) => {
   try {
     const { senderId } = req.user;
 
-    const chatList = await UserChatList.getUserChatList(senderId);
+    // Get the distinct list of users with whom the sender has chatted
+    const chatList = await ChatMessage.getDistinctChatUsers(senderId);
 
     res.status(200).json({ chatList: chatList });
   } catch (error) {
