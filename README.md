@@ -9,7 +9,7 @@ This project is designed to create a robust backend system for a web application
 The project follows the directory structure outlined below:
 
 ### `app` Directory Structure
-
+```
 📦app
  ┣ 📂controllers
  ┃ ┣ 📜categoryController.js
@@ -35,7 +35,7 @@ The project follows the directory structure outlined below:
  ┗ 📂utils
  ┃ ┣ 📜jwtUtils.js
  ┃ ┗ 📜otpUtils.js
-
+```
 ## Key Features
 
 - **User Management:**
