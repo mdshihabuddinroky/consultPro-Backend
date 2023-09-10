@@ -1,36 +1,23 @@
 // chatController.js 
 const ChatMessage = require('../models/chatMessageModel');
-const { connectedUsers } = require('../index'); // Import the connectedUsers Map from index.js
-
-// Controller to send a chat message
+const WebSockets = require('../utils/websockets');
+//const io = require('../index').io;
 exports.sendMessage = async (req, res) => {
   try {
     const { receiverId, message, messageType } = req.body;
-    const { senderId } = req.user;
-
+    const senderId = req.user.user_id;
     const messageData = {
       sender_id: senderId,
       receiver_id: receiverId,
       message: message,
       message_type: messageType,
+      created_at: new Date(),
     };
+   await ChatMessage.saveMessage(messageData);
+       // Access the websockets instance from the app using req.app
+       const websockets = req.app.get('websockets');
 
-    await ChatMessage.saveMessage(messageData);
-
-    // Get the connected sockets for the sender and receiver from the connectedUsers Map
-    const senderSocket = connectedUsers.get(senderId);
-    const receiverSocket = connectedUsers.get(receiverId);
-
-    if (senderSocket) {
-      // Emit the newMessage event to the sender socket
-      senderSocket.emit('newMessage', { message: messageData });
-    }
-
-    if (receiverSocket) {
-      // Emit the newMessage event to the receiver socket
-      receiverSocket.emit('newMessage', { message: messageData });
-    }
-
+       io.to(receiverId).emit('newMessage', { message: messageData });
     res.status(200).json({ message: 'Message sent successfully' });
   } catch (error) {
     console.error('Error sending message:', error);
@@ -38,7 +25,6 @@ exports.sendMessage = async (req, res) => {
   }
 };
 
-// Rest of the controllers (getChatMessages and getUserChatList) remain unchanged
 
 
 // Controller to get chat messages between two users

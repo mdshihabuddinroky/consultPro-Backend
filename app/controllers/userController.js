@@ -1,11 +1,4 @@
-// controllers/userController.js
 
-// const { generateToken } = require("../utils/jwtUtils");
-// const { generateOTP } = require("../utils/otpUtils");
-// const User = require("../models/userModel");
-
-
-// controllers/userController.js
 
 const { generateToken } = require("../utils/jwtUtils");
 const { generateOTP } = require("../utils/otpUtils");
@@ -33,6 +26,9 @@ async function registerOrLoginUser(req, res) {
           user_id: user.user_id,
           number: user.number,
           profile_type: user.profile_type,
+          name: user.name,
+          email: user.email,
+          profile_image: user.profile_image,
         };
         const token = generateToken(payload);
 
